@@ -14,6 +14,13 @@ export REGION="us-central1" # Change to your preferred region
 export BUCKET_NAME="tf-state-bucket-${PROJECT_ID}"
 export AR_REPO_NAME="nuxt-app-repo" # Artifact Registry repo name
 
+# --- Authentication Check ---
+echo "✅ Checking authentication..."
+if ! gcloud auth list --filter=status:ACTIVE --format="value(account)" | grep -q "@"; then
+    echo "❌ No active authentication found. Please run 'gcloud auth login' first."
+    exit 1
+fi
+
 # --- Set Project ---
 echo "✅ Setting project to ${PROJECT_ID}..."
 gcloud config set project ${PROJECT_ID}
@@ -57,5 +64,11 @@ PROJECT_NUMBER=$(gcloud projects describe ${PROJECT_ID} --format="value(projectN
 gcloud projects add-iam-policy-binding ${PROJECT_ID} \
     --member="serviceAccount:${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com" \
     --role="roles/container.developer"
+
+# --- Grant current user permissions to the GCS bucket ---
+echo "✅ Granting current user permissions to the GCS bucket..."
+CURRENT_USER=$(gcloud config get-value account)
+gsutil iam ch user:${CURRENT_USER}:objectAdmin gs://${BUCKET_NAME}
+gsutil iam ch user:${CURRENT_USER}:legacyBucketReader gs://${BUCKET_NAME}
 
 echo "🎉 Setup complete! You can now run Terraform."

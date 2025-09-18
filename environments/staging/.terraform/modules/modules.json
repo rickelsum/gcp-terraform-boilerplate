@@ -1,1 +1,0 @@
-{"Modules":[{"Key":"","Source":"","Dir":"."},{"Key":"gke_certificate","Source":"../../modules/gke_certificates","Dir":"../../modules/gke_certificates"},{"Key":"gke_cluster","Source":"../../modules/gke_cluster","Dir":"../../modules/gke_cluster"}]}

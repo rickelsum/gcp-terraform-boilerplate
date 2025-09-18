@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nuxt-app-deployment
+  namespace: nuxt-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nuxt-app
+  template:
+    metadata:
+      labels:
+        app: nuxt-app
+    spec:
+      containers:
+      - name: nuxt-app
+        # IMPORTANT: This image path is a placeholder that Cloud Build will replace!
+        image: IMAGE_PLACEHOLDER
+        ports:
+        - containerPort: 3000

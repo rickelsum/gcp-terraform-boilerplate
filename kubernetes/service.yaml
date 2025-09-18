@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nuxt-app-service
+  namespace: nuxt-app
+spec:
+  type: NodePort # The Ingress will target this service
+  selector:
+    app: nuxt-app
+  ports:
+  - protocol: TCP
+    port: 80 # Service port
+    targetPort: 3000 # Port on the container

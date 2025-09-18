@@ -1,0 +1,43 @@
+steps:
+ # 1. Build the Docker image
+ - name: 'gcr.io/cloud-builders/docker'
+   args: [ 'build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA', './nuxt-app' ]
+ 
+ # 2. Push the image to Artifact Registry
+ - name: 'gcr.io/cloud-builders/docker'
+   args: [ 'push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA' ]
+ 
+ # 3. Get GKE cluster credentials
+ - name: 'gcr.io/cloud-builders/gcloud'
+   entrypoint: 'bash'
+   args:
+   - '-c'
+   - |
+     gcloud container clusters get-credentials ${_CLUSTER_NAME} --region ${_REGION}
+ 
+ # 4. Substitute the image tag and domain in Kubernetes manifests
+ - name: 'gcr.io/cloud-builders/gcloud'
+   entrypoint: 'bash'
+   args:
+   - '-c'
+   - |
+     sed -i "s|IMAGE_PLACEHOLDER|${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA|g" kubernetes/deployment.yaml
+     sed -i "s|staging.your-domain.com|${_DOMAIN}|g" kubernetes/ingress.yaml
+ 
+ # 5. Apply the Kubernetes manifests
+ - name: 'gcr.io/cloud-builders/kubectl'
+   args: ['apply', '-f', 'kubernetes/']
+   env:
+   - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+   - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+ 
+ # Store the final image name
+images:
+- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA'
+
+# Define user-substitutable variables
+substitutions:
+  _REGION: 'us-central1'
+  _AR_REPO_NAME: 'nuxt-app-repo'
+  _CLUSTER_NAME: 'gke-cluster-staging' # Default to staging
+  _DOMAIN: 'staging.your-domain.com' # Default to staging

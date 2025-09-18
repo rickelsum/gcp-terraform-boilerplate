@@ -32,7 +32,8 @@ gcloud services enable \
   artifactregistry.googleapis.com \
   cloudbuild.googleapis.com \
   cloudresourcemanager.googleapis.com \
-  compute.googleapis.com # Added for Google Managed Certs & LBs
+  compute.googleapis.com \
+  storage.googleapis.com # Required for GCS bucket access
 
 # --- Create GCS Bucket for Terraform State ---
 echo "✅ Checking for GCS bucket: ${BUCKET_NAME}..."
@@ -68,7 +69,8 @@ gcloud projects add-iam-policy-binding ${PROJECT_ID} \
 # --- Grant current user permissions to the GCS bucket ---
 echo "✅ Granting current user permissions to the GCS bucket..."
 CURRENT_USER=$(gcloud config get-value account)
-gsutil iam ch user:${CURRENT_USER}:objectAdmin gs://${BUCKET_NAME}
-gsutil iam ch user:${CURRENT_USER}:legacyBucketReader gs://${BUCKET_NAME}
+gcloud storage buckets add-iam-policy-binding gs://${BUCKET_NAME} \
+    --member="user:${CURRENT_USER}" \
+    --role="roles/storage.objectAdmin"
 
 echo "🎉 Setup complete! You can now run Terraform."

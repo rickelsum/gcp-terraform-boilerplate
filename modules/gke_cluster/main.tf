@@ -21,16 +21,12 @@ resource "google_container_cluster" "primary" {
   network    = google_compute_network.vpc_network.id
   subnetwork = google_compute_subnetwork.vpc_subnetwork.id
 
-  # Using a cost-effective Autopilot cluster
   enable_autopilot = true
 
-  # Remove the default node pool created with standard clusters
   remove_default_node_pool = true
   initial_node_count       = 1
 }
 
-# This resource was created by the setup.sh script, but we import it
-# into Terraform's state so Terraform is aware of it.
 resource "google_artifact_registry_repository" "docker_repo" {
   project       = var.project_id
   location      = var.region

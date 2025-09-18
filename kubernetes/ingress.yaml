@@ -4,19 +4,14 @@ metadata:
   name: nuxt-app-ingress
   namespace: nuxt-app
   annotations:
-    # This annotation tells cert-manager to create a certificate for this ingress
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
-    # This specifies the GKE Ingress class
+    # Use the GKE Ingress controller, which creates a Google Cloud Load Balancer
     kubernetes.io/ingress.class: "gce"
+    # Link to the pre-created Google-managed certificate
+    networking.gke.io/managed-certificates: "CERTIFICATE_NAME_PLACEHOLDER"
 spec:
-  tls:
-  - hosts:
-    # Replace with your staging domain
-    - staging.your-domain.com
-    secretName: nuxt-app-tls-secret # cert-manager will create this secret
   rules:
-  # Replace with your staging domain
-  - host: staging.your-domain.com
+  # This host will be replaced by the Cloud Build script
+  - host: DOMAIN_NAME_PLACEHOLDER
     http:
       paths:
       - path: /

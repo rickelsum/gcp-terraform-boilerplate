@@ -29,8 +29,3 @@ variable "ar_repo_name" {
   description = "The name for the Artifact Registry repository."
   type        = string
 }
-variable "ar_location" {
-  description = "The location for the Artifact Registry repository."
-  type        = string
-  default     = "us-central1"
-}

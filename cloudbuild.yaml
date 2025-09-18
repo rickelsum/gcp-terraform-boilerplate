@@ -1,43 +1,46 @@
 steps:
- # 1. Build the Docker image
- - name: 'gcr.io/cloud-builders/docker'
-   args: [ 'build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA', './nuxt-app' ]
- 
- # 2. Push the image to Artifact Registry
- - name: 'gcr.io/cloud-builders/docker'
-   args: [ 'push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA' ]
- 
- # 3. Get GKE cluster credentials
- - name: 'gcr.io/cloud-builders/gcloud'
-   entrypoint: 'bash'
-   args:
-   - '-c'
-   - |
-     gcloud container clusters get-credentials ${_CLUSTER_NAME} --region ${_REGION}
- 
- # 4. Substitute the image tag and domain in Kubernetes manifests
- - name: 'gcr.io/cloud-builders/gcloud'
-   entrypoint: 'bash'
-   args:
-   - '-c'
-   - |
-     sed -i "s|IMAGE_PLACEHOLDER|${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA|g" kubernetes/deployment.yaml
-     sed -i "s|staging.your-domain.com|${_DOMAIN}|g" kubernetes/ingress.yaml
- 
- # 5. Apply the Kubernetes manifests
- - name: 'gcr.io/cloud-builders/kubectl'
-   args: ['apply', '-f', 'kubernetes/']
-   env:
-   - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
-   - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
- 
- # Store the final image name
+  # 1. Build the Docker image for the Nuxt.js application
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [ 'build', '-t', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA', './nuxt-app' ]
+  
+  # 2. Push the newly built image to Google Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [ 'push', '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA' ]
+  
+  # 3. Authenticate kubectl with the target GKE cluster
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+      gcloud container clusters get-credentials ${_CLUSTER_NAME} --region ${_REGION}
+  
+  # 4. Substitute dynamic values into the Kubernetes manifests
+  - name: 'gcr.io/cloud-builders/gcloud'
+    entrypoint: 'bash'
+    args:
+    - '-c'
+    - |
+      sed -i "s|IMAGE_PLACEHOLDER|${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA|g" kubernetes/deployment.yaml
+      sed -i "s|CERTIFICATE_NAME_PLACEHOLDER|${_CERTIFICATE_NAME}|g" kubernetes/ingress.yaml
+      sed -i "s|DOMAIN_NAME_PLACEHOLDER|${_DOMAIN}|g" kubernetes/ingress.yaml
+  
+  # 5. Apply the configured manifests to the GKE cluster
+  - name: 'gcr.io/cloud-builders/kubectl'
+    args: ['apply', '-f', 'kubernetes/']
+    env:
+    - 'CLOUDSDK_COMPUTE_REGION=${_REGION}'
+    - 'CLOUDSDK_CONTAINER_CLUSTER=${_CLUSTER_NAME}'
+  
+  # Make the final image name available to other build steps if needed
 images:
-- '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA'
-
-# Define user-substitutable variables
+    - '${_REGION}-docker.pkg.dev/${PROJECT_ID}/${_AR_REPO_NAME}/nuxt-app:$SHORT_SHA'
+  
+  # Define default and user-substitutable variables
 substitutions:
   _REGION: 'us-central1'
   _AR_REPO_NAME: 'nuxt-app-repo'
-  _CLUSTER_NAME: 'gke-cluster-staging' # Default to staging
-  _DOMAIN: 'staging.your-domain.com' # Default to staging
+  # --- Staging Defaults ---
+  _CLUSTER_NAME: 'gke-cluster-staging'
+  _DOMAIN: 'staging.your-domain.com'
+  _CERTIFICATE_NAME: 'gke-cert-staging' # This must match the name in Terraform

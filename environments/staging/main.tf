@@ -33,7 +33,7 @@ module "gke_cluster" {
 
 # Provision the Google-managed SSL certificate for our domain
 module "gke_certificate" {
-  source = "../../modules/gke-certificate" # <-- Note the new module source path
+  source = "../../modules/gke_certificates"
 
   project_id       = var.project_id
   certificate_name = "gke-cert-staging" # A unique name for the cert

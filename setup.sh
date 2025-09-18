@@ -24,7 +24,8 @@ gcloud services enable \
   container.googleapis.com \
   artifactregistry.googleapis.com \
   cloudbuild.googleapis.com \
-  cloudresourcemanager.googleapis.com
+  cloudresourcemanager.googleapis.com \
+  compute.googleapis.com # Added for Google Managed Certs & LBs
 
 # --- Create GCS Bucket for Terraform State ---
 echo "✅ Checking for GCS bucket: ${BUCKET_NAME}..."
